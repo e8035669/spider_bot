@@ -1,0 +1,12 @@
+[package]
+name = "rust_lib_spider_run_gui"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+anyhow = "1.0"
+flutter_rust_bridge = "=2.0.0-dev.25"
+serialport = "4.3.0"
