@@ -3,6 +3,8 @@
 
 #include "Adafruit_PWMServoDriver.h"
 #include "CommandParser.h"
+#include "spider_control.h"
+#include "spider_foot.h"
 
 #define DEFAULT_USMIN 600
 #define DEFAULT_USMAX 2400
@@ -14,61 +16,58 @@
 
 typedef CommandParser<> MyCommandParser;
 
-struct PwmLimit {
-  int min = DEFAULT_SERVOMIN;
-  int max = DEFAULT_SERVOMAX;
-};
-
-struct Settings {
-  PwmLimit limits[16 * N_PWMS] = {};
-};
-
 MyCommandParser parser;
 // Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
-Adafruit_PWMServoDriver pwms[N_PWMS] = {Adafruit_PWMServoDriver(0x40),
-                                        Adafruit_PWMServoDriver(0x41)};
-Settings settings = Settings();
+Adafruit_PWMServoDriver pwms[2] = {Adafruit_PWMServoDriver(0x40),
+                                   Adafruit_PWMServoDriver(0x41)};
 
-void reset_pwm(Adafruit_PWMServoDriver& cur_pwm) {
-  for (int i = 0; i < 16; ++i) {
-    cur_pwm.setPWM(i, 0, 4096);
-  }
-}
+SpiderControl spider(SpiderControlConf{{
+    SpiderFootDef(pwms[0], 0),
+    SpiderFootDef(pwms[0], 1),
+    SpiderFootDef(pwms[0], 2),
+    SpiderFootDef(pwms[0], 4),
+    SpiderFootDef(pwms[0], 5),
+    SpiderFootDef(pwms[0], 6),
+    SpiderFootDef(pwms[0], 8),
+    SpiderFootDef(pwms[0], 9),
+    SpiderFootDef(pwms[0], 10),
+    SpiderFootDef(pwms[1], 0),
+    SpiderFootDef(pwms[1], 1),
+    SpiderFootDef(pwms[1], 2),
+    SpiderFootDef(pwms[1], 4),
+    SpiderFootDef(pwms[1], 5),
+    SpiderFootDef(pwms[1], 6),
+    SpiderFootDef(pwms[1], 8),
+    SpiderFootDef(pwms[1], 9),
+    SpiderFootDef(pwms[1], 10),
+}});
 
-void write_pwm(Adafruit_PWMServoDriver& cur_pwm, uint16_t pin, PwmLimit& limit,
-               int16_t deg) {
-  int16_t val = 4096;
-  if (deg >= 0 && deg <= 180) {
-    val = map(deg, 0, 180, limit.min, limit.max);
-  }
-  // Serial.print("set pwm ");
-  // Serial.print(pin);
-  // Serial.print(" ");
-  // Serial.print(val);
-  // Serial.print(" ");
-  // Serial.println(deg);
-  cur_pwm.setPWM(pin, 0, val);
-}
-
-bool write_pwm_all(uint16_t pin, int16_t deg) {
-  if (pin < 16 * N_PWMS) {
-    uint16_t pwm_idx = pin / 16;
-    uint16_t pwm_pin = pin % 16;
-    write_pwm(pwms[pwm_idx], pwm_pin, settings.limits[pin], deg);
-    return true;
-  }
-  return false;
+SpiderResult write_pwm_all(uint16_t pin, int16_t deg) {
+  SpiderResult ret = spider.write_one_deg((uint8_t)pin, deg);
+  return ret;
 }
 
 void cmd_write(MyCommandParser::Argument* args, char* response) {
   uint16_t pin = args[0].asUInt64;
   int16_t deg = args[1].asInt64;
-  bool ret = write_pwm_all(pin, deg);
-  if (ret) {
-    strlcpy(response, "success", MyCommandParser::MAX_RESPONSE_SIZE);
-  } else {
-    strlcpy(response, "fail", MyCommandParser::MAX_RESPONSE_SIZE);
-  }
+  SpiderResult ret = write_pwm_all(pin, deg);
+  // itoa((int)ret, response, 10);
+  sprintf(response, "%d %d %d", ret, pin, deg);
+}
+
+SpiderResult update_setting(uint16_t pin, int16_t center_deg,
+                            int16_t multiply) {
+  SpiderResult ret = spider.update_setting_center(pin, center_deg, multiply);
+  return ret;
+}
+
+void cmd_update(MyCommandParser::Argument* args, char* response) {
+  uint16_t pin = args[0].asUInt64;
+  int16_t center_deg = args[1].asInt64;
+  int16_t multiply = args[2].asInt64;
+  SpiderResult ret = update_setting(pin, center_deg, multiply);
+  // itoa((int)ret, response, 10);
+  sprintf(response, "%d %d %d %d", ret, pin, center_deg, multiply);
 }
 
 void setup() {
@@ -85,13 +84,7 @@ void setup() {
   }
 
   parser.registerCommand("write", "ui", cmd_write);
-
-  // for (int i = 0; i < 16; ++i) {
-  //   PwmLimit& limit = settings.limits[i];
-  //   Serial.print(limit.min);
-  //   Serial.print("\t");
-  //   Serial.println(limit.max);
-  // }
+  parser.registerCommand("update", "uii", cmd_update);
 }
 
 void loop() {

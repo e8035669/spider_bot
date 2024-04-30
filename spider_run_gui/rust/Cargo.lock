@@ -194,9 +194,9 @@ dependencies = [
 
 [[package]]
 name = "flutter_rust_bridge"
-version = "2.0.0-dev.27"
+version = "2.0.0-dev.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de520aa4b8fcb8e6cd67492a9de17e29e272daac98be05a97485d531a1d2dceb"
+checksum = "34014207992d96657886c50c90ab503bb4581cc9c2b1ea7ffad2ec12400032da"
 dependencies = [
  "allo-isolate",
  "android_logger",
@@ -221,9 +221,14 @@ dependencies = [
 
 [[package]]
 name = "flutter_rust_bridge_macros"
-version = "2.0.0-dev.27"
+version = "2.0.0-dev.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e530c29aaf59c8ff9d3ba588956b4b29d93fcfdee213f422b0e6a76a1e632c6e"
+checksum = "fd250246955bb9548a99733859946a5721289ec152de5fcc6eb03da7d3143dd1"
+dependencies = [
+ "hex",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "futures"
@@ -325,6 +330,12 @@ name = "hermit-abi"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
+
+[[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "io-kit-sys"

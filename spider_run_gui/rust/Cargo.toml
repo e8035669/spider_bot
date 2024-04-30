@@ -8,5 +8,5 @@ crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
 anyhow = "1.0"
-flutter_rust_bridge = "=2.0.0-dev.27"
+flutter_rust_bridge = "=2.0.0-dev.32"
 serialport = "4.3.0"
