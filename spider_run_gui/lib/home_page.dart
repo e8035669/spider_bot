@@ -82,7 +82,7 @@ class _HomePage2State extends State<HomePage2> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = const MockListPortPage();
+        page = const ListPortPage();
         break;
       case 1:
         page = const SettingPage();

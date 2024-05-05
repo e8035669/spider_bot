@@ -6,7 +6,8 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// The type `SerialComponents` is not used by any `pub` functions, thus it is ignored.
+// The type `MockSerialConnection` is not used by any `pub` functions, thus it is ignored.
+// The type `UsbSerial` is not used by any `pub` functions, thus it is ignored.
 
 Future<List<String>> listPorts({dynamic hint}) =>
     RustLib.instance.api.listPorts(hint: hint);
@@ -29,10 +30,19 @@ class SerialConnection extends RustOpaque {
         .instance.api.rust_arc_decrement_strong_count_SerialConnectionPtr,
   );
 
-  static Future<SerialConnection> create(
-          {required String deviceName, dynamic hint}) =>
-      RustLib.instance.api
-          .serialConnectionCreate(deviceName: deviceName, hint: hint);
+  Future<void> connect(
+          {required String deviceName, required bool mock, dynamic hint}) =>
+      RustLib.instance.api.serialConnectionConnect(
+          that: this, deviceName: deviceName, mock: mock, hint: hint);
+
+  Future<void> disconnect({dynamic hint}) =>
+      RustLib.instance.api.serialConnectionDisconnect(that: this, hint: hint);
+
+  Future<bool> isConnected({dynamic hint}) =>
+      RustLib.instance.api.serialConnectionIsConnected(that: this, hint: hint);
+
+  factory SerialConnection({dynamic hint}) =>
+      RustLib.instance.api.serialConnectionNew(hint: hint);
 
   Future<void> sendWriteCmd(
           {required int pin, required int deg, dynamic hint}) =>

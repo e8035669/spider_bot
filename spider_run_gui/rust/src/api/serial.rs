@@ -1,8 +1,10 @@
+use anyhow::{anyhow, Ok};
 use anyhow::{Context, Result};
-use serialport;
+use serialport::{self, SerialPort};
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::sync::Mutex;
+use std::thread::sleep;
 use std::time::Duration;
 
 pub fn list_ports() -> Result<Vec<String>> {
@@ -11,40 +13,139 @@ pub fn list_ports() -> Result<Vec<String>> {
     Ok(ret)
 }
 
-struct SerialComponents {
-    conn: Box<dyn serialport::SerialPort>,
-    reader: BufReader<Box<dyn serialport::SerialPort>>,
+pub trait SerialInterface: Send + Sync {
+    fn send_write_cmd(&mut self, pin: i32, deg: i32) -> Result<()>;
 }
 
-#[flutter_rust_bridge::frb(opaque)]
-pub struct SerialConnection {
-    comp: Mutex<SerialComponents>,
+pub struct UsbSerial {
+    conn: Box<dyn SerialPort>,
+    reader: BufReader<Box<dyn SerialPort>>,
 }
 
-impl SerialConnection {
-    pub fn create(device_name: String) -> Result<Self> {
-        let conn = serialport::new(device_name.as_str(), 9600)
+impl UsbSerial {
+    fn create(device_name: &str) -> Result<Self> {
+        let conn = serialport::new(device_name, 9600)
             .timeout(Duration::from_secs(10))
             .open()
             .with_context(|| format!("Open device {} failed", device_name))?;
         let conn_clone = conn.try_clone().with_context(|| "Serial clone failed")?;
         let reader = BufReader::new(conn_clone);
-        let comp = SerialComponents { conn, reader };
-        let comp = Mutex::new(comp);
-        Ok(Self { comp })
+        let comp = UsbSerial { conn, reader };
+        Ok(comp)
     }
+}
 
-    pub fn send_write_cmd(&self, pin: i32, deg: i32) -> Result<()> {
-        let mut comp = self.comp.lock().unwrap();
-        let SerialComponents { conn, reader } = &mut *comp;
+impl SerialInterface for UsbSerial {
+    fn send_write_cmd(&mut self, pin: i32, deg: i32) -> Result<()> {
         let cmd = format!("write {} {}\n", pin, deg);
-        conn.write_all(cmd.as_str().as_bytes())
+        self.conn
+            .write_all(cmd.as_str().as_bytes())
             .with_context(|| "Write cmd failed")?;
 
         let mut msg = String::new();
-        let _ret = reader.read_line(&mut msg)?;
+        let _ret = self.reader.read_line(&mut msg)?;
         let msg = msg.trim();
         println!("Get message {}", msg);
         Ok(())
     }
 }
+
+unsafe impl Sync for UsbSerial {}
+
+pub struct MockSerialConnection {}
+
+impl MockSerialConnection {
+    fn create(device_name: &str) -> Result<Self> {
+        println!("Mock create {}", device_name);
+        sleep(Duration::from_secs(1));
+        Ok(Self {})
+    }
+}
+
+impl SerialInterface for MockSerialConnection {
+    fn send_write_cmd(&mut self, pin: i32, deg: i32) -> Result<()> {
+        sleep(Duration::from_millis(10));
+        println!("Mock Write {} {}", pin, deg);
+        Ok(())
+    }
+}
+
+#[flutter_rust_bridge::frb(opaque)]
+pub struct SerialConnection {
+    comp: Mutex<Option<Box<dyn SerialInterface + Send + Sync>>>,
+}
+
+impl SerialConnection {
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn new() -> Self {
+        Self {
+            comp: Mutex::new(None),
+        }
+    }
+
+    pub fn is_connected(&self) -> bool {
+        let comp = self.comp.lock().unwrap();
+        comp.is_some()
+    }
+
+    pub fn connect(&self, device_name: &str, mock: bool) -> Result<()> {
+        let mut comp = self.comp.lock().unwrap();
+        if mock {
+            *comp = Some(Box::new(MockSerialConnection::create(device_name)?));
+        } else {
+            *comp = Some(Box::new(UsbSerial::create(device_name)?));
+        }
+        println!("Connected to {}", device_name);
+        Ok(())
+    }
+
+    pub fn disconnect(&self) -> Result<()> {
+        let mut comp = self.comp.lock().unwrap();
+        *comp = None;
+        println!("Disconnected");
+        Ok(())
+    }
+
+    pub fn send_write_cmd(&self, pin: i32, deg: i32) -> Result<()> {
+        let mut comp = self.comp.lock().unwrap();
+        match *comp {
+            Some(ref mut comp) => {
+                comp.send_write_cmd(pin, deg)?;
+            }
+            None => return Err(anyhow!("Serial not connect")),
+        }
+        Ok(())
+    }
+}
+
+// #[flutter_rust_bridge::frb(opaque)]
+// pub struct Foo {
+//     aaa: String,
+//     bbb: Arc<Mutex<Option<Box<dyn SerialInterface + Send + Sync>>>>,
+// }
+
+// impl Foo {
+//     pub fn new() -> Self {
+//         Self {
+//             aaa: String::from("123"),
+//             bbb: Arc::new(Mutex::new(None)),
+//         }
+//     }
+// }
+
+// #[allow(dead_code)]
+// fn assert_properties() {
+//     fn is_send<T: Send>() {}
+//     fn is_sync<T: Sync>() {}
+//     fn is_send_sync<T: Send + Sync>() {}
+
+//     is_send::<UsbSerial>();
+//     is_sync::<Box<dyn SerialInterface + Send + Sync>>();
+//     is_send_sync::<i32>();
+//     is_send_sync::<Mutex<i32>>();
+//     is_send_sync::<Arc<Mutex<i32>>>();
+//     // is_send_sync::<Arc<Rc<Mutex<i32>>>>();
+
+//     is_send::<MockSerialConnection>();
+//     is_sync::<MockSerialConnection>();
+// }
