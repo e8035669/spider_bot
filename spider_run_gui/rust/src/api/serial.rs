@@ -3,7 +3,7 @@ use anyhow::{Context, Result};
 use serialport::{self, SerialPort};
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -13,8 +13,9 @@ pub fn list_ports() -> Result<Vec<String>> {
     Ok(ret)
 }
 
-pub trait SerialInterface: Send + Sync {
+pub trait SerialInterface: Send {
     fn send_write_cmd(&mut self, pin: i32, deg: i32) -> Result<()>;
+    fn update_setting(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()>;
 }
 
 pub struct UsbSerial {
@@ -39,7 +40,7 @@ impl SerialInterface for UsbSerial {
     fn send_write_cmd(&mut self, pin: i32, deg: i32) -> Result<()> {
         let cmd = format!("write {} {}\n", pin, deg);
         self.conn
-            .write_all(cmd.as_str().as_bytes())
+            .write_all(cmd.as_bytes())
             .with_context(|| "Write cmd failed")?;
 
         let mut msg = String::new();
@@ -48,9 +49,23 @@ impl SerialInterface for UsbSerial {
         println!("Get message {}", msg);
         Ok(())
     }
+
+    fn update_setting(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()> {
+        let center_deg = center_deg.round() as i32;
+        let multiply = (multiply * 1000.0).round() as i32;
+        let cmd = format!("update {} {} {}\n", pin, center_deg, multiply);
+        self.conn
+            .write_all(cmd.as_bytes())
+            .with_context(|| "Write cmd failed")?;
+        let mut msg = String::new();
+        let _ret = self.reader.read_line(&mut msg)?;
+        let msg = msg.trim();
+        println!("Get message {}", msg);
+        Ok(())
+    }
 }
 
-unsafe impl Sync for UsbSerial {}
+// unsafe impl Sync for UsbSerial {}
 
 pub struct MockSerialConnection {}
 
@@ -68,11 +83,17 @@ impl SerialInterface for MockSerialConnection {
         println!("Mock Write {} {}", pin, deg);
         Ok(())
     }
+
+    fn update_setting(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()> {
+        sleep(Duration::from_millis(10));
+        println!("Mock update {} {} {}", pin, center_deg, multiply);
+        Ok(())
+    }
 }
 
 #[flutter_rust_bridge::frb(opaque)]
 pub struct SerialConnection {
-    comp: Mutex<Option<Box<dyn SerialInterface + Send + Sync>>>,
+    comp: Mutex<Option<Box<dyn SerialInterface>>>,
 }
 
 impl SerialConnection {
@@ -140,12 +161,7 @@ impl SerialConnection {
 //     fn is_send_sync<T: Send + Sync>() {}
 
 //     is_send::<UsbSerial>();
-//     is_sync::<Box<dyn SerialInterface + Send + Sync>>();
-//     is_send_sync::<i32>();
-//     is_send_sync::<Mutex<i32>>();
-//     is_send_sync::<Arc<Mutex<i32>>>();
-//     // is_send_sync::<Arc<Rc<Mutex<i32>>>>();
-
-//     is_send::<MockSerialConnection>();
-//     is_sync::<MockSerialConnection>();
+//     is_send_sync::<Arc<Mutex<Box<dyn SerialPort>>>>();
+//     is_send_sync::<Mutex<BufReader<Box<dyn SerialPort>>>>();
+//     is_send_sync::<Mutex<UsbSerial>>();
 // }
