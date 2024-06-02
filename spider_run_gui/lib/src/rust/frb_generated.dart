@@ -57,7 +57,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.0.0-dev.32';
 
   @override
-  int get rustContentHash => 1358522426;
+  int get rustContentHash => -1946305087;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -77,6 +77,12 @@ abstract class RustLibApi extends BaseApi {
   Future<void> serialConnectionDisconnect(
       {required SerialConnection that, dynamic hint});
 
+  Future<SpiderFootStatus> serialConnectionGetFootStatus(
+      {required SerialConnection that, required int pin, dynamic hint});
+
+  Future<SpiderFootSetting> serialConnectionGetSetting(
+      {required SerialConnection that, required int pin, dynamic hint});
+
   Future<bool> serialConnectionIsConnected(
       {required SerialConnection that, dynamic hint});
 
@@ -86,6 +92,13 @@ abstract class RustLibApi extends BaseApi {
       {required SerialConnection that,
       required int pin,
       required int deg,
+      dynamic hint});
+
+  Future<void> serialConnectionUpdateSetting(
+      {required SerialConnection that,
+      required int pin,
+      required double centerDeg,
+      required double multiply,
       dynamic hint});
 
   Future<List<String>> listPorts({dynamic hint});
@@ -174,6 +187,63 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<SpiderFootStatus> serialConnectionGetFootStatus(
+      {required SerialConnection that, required int pin, dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedrust_asyncRwLockSerialConnection(
+            that, serializer);
+        sse_encode_i_32(pin, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 9, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_spider_foot_status,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kSerialConnectionGetFootStatusConstMeta,
+      argValues: [that, pin],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSerialConnectionGetFootStatusConstMeta =>
+      const TaskConstMeta(
+        debugName: "SerialConnection_get_foot_status",
+        argNames: ["that", "pin"],
+      );
+
+  @override
+  Future<SpiderFootSetting> serialConnectionGetSetting(
+      {required SerialConnection that, required int pin, dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedrust_asyncRwLockSerialConnection(
+            that, serializer);
+        sse_encode_i_32(pin, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 8, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_spider_foot_setting,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kSerialConnectionGetSettingConstMeta,
+      argValues: [that, pin],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSerialConnectionGetSettingConstMeta => const TaskConstMeta(
+        debugName: "SerialConnection_get_setting",
+        argNames: ["that", "pin"],
+      );
+
+  @override
   Future<bool> serialConnectionIsConnected(
       {required SerialConnection that, dynamic hint}) {
     return handler.executeNormal(NormalTask(
@@ -259,6 +329,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> serialConnectionUpdateSetting(
+      {required SerialConnection that,
+      required int pin,
+      required double centerDeg,
+      required double multiply,
+      dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedrust_asyncRwLockSerialConnection(
+            that, serializer);
+        sse_encode_i_32(pin, serializer);
+        sse_encode_f_64(centerDeg, serializer);
+        sse_encode_f_64(multiply, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 7, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kSerialConnectionUpdateSettingConstMeta,
+      argValues: [that, pin, centerDeg, multiply],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSerialConnectionUpdateSettingConstMeta =>
+      const TaskConstMeta(
+        debugName: "SerialConnection_update_setting",
+        argNames: ["that", "pin", "centerDeg", "multiply"],
+      );
+
+  @override
   Future<List<String>> listPorts({dynamic hint}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -288,7 +393,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(name, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -313,7 +418,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(a, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 9, port: port_);
+            funcId: 12, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -337,7 +442,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 8, port: port_);
+            funcId: 11, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -406,6 +511,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double dco_decode_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
+  }
+
+  @protected
   int dco_decode_i_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -421,6 +532,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
+  }
+
+  @protected
+  SpiderFootSetting dco_decode_spider_foot_setting(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return SpiderFootSetting(
+      centerDeg: dco_decode_f_64(arr[0]),
+      multiply: dco_decode_f_64(arr[1]),
+    );
+  }
+
+  @protected
+  SpiderFootStatus dco_decode_spider_foot_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return SpiderFootStatus(
+      enabled: dco_decode_bool(arr[0]),
+      deg: dco_decode_i_32(arr[1]),
+    );
   }
 
   @protected
@@ -489,6 +624,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double sse_decode_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getFloat64();
+  }
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
@@ -511,6 +652,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  SpiderFootSetting sse_decode_spider_foot_setting(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_centerDeg = sse_decode_f_64(deserializer);
+    var var_multiply = sse_decode_f_64(deserializer);
+    return SpiderFootSetting(centerDeg: var_centerDeg, multiply: var_multiply);
+  }
+
+  @protected
+  SpiderFootStatus sse_decode_spider_foot_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_enabled = sse_decode_bool(deserializer);
+    var var_deg = sse_decode_i_32(deserializer);
+    return SpiderFootStatus(enabled: var_enabled, deg: var_deg);
   }
 
   @protected
@@ -574,6 +732,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_f_64(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putFloat64(self);
+  }
+
+  @protected
   void sse_encode_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putInt32(self);
@@ -594,6 +758,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
+  }
+
+  @protected
+  void sse_encode_spider_foot_setting(
+      SpiderFootSetting self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.centerDeg, serializer);
+    sse_encode_f_64(self.multiply, serializer);
+  }
+
+  @protected
+  void sse_encode_spider_foot_status(
+      SpiderFootStatus self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.enabled, serializer);
+    sse_encode_i_32(self.deg, serializer);
   }
 
   @protected

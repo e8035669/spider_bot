@@ -12,12 +12,14 @@ class RawControlBody extends StatefulWidget {
 }
 
 class _RawControlBodyState extends State<RawControlBody> {
-  List<bool> motorEnable = List.filled(32, false);
-  List<double> motorValue = List.filled(32, 90.0);
+  Future<String>? loadState;
 
   @override
   void initState() {
     super.initState();
+
+    var serial = context.read<SerialConnectModel>();
+    loadState = serial.getAllFootStatus().then((value) => "OK");
   }
 
   @override
@@ -25,8 +27,56 @@ class _RawControlBodyState extends State<RawControlBody> {
     super.dispose();
   }
 
-  void writeCmd(int pin) async {
+  Widget buildLoading(BuildContext context) {
+    return const Center(
+      child: CircularProgressIndicator(
+        value: null,
+      ),
+    );
+  }
+
+  Widget buildContent(BuildContext context) {
+    return const RawControlContent();
+  }
+
+  Widget buildError(BuildContext context) {
+    return const Center(
+      child: Icon(Icons.error),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: loadState,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return buildError(context);
+        }
+
+        if (snapshot.hasData) {
+          return buildContent(context);
+        } else {
+          return buildLoading(context);
+        }
+      },
+    );
+  }
+}
+
+class RawControlContent extends StatefulWidget {
+  const RawControlContent({super.key});
+
+  @override
+  State<RawControlContent> createState() => _RawControlContentState();
+}
+
+class _RawControlContentState extends State<RawControlContent> {
+  void writeCmd(BuildContext context, int pin) async {
     var serial = context.read<SerialConnectModel>();
+
+    var motorEnable = serial.motorEnable;
+    var motorValue = serial.motorValue;
 
     if (motorEnable[pin]) {
       var deg = motorValue[pin];
@@ -39,6 +89,10 @@ class _RawControlBodyState extends State<RawControlBody> {
   }
 
   List<Widget> buildController(BuildContext context) {
+    var serial = context.read<SerialConnectModel>();
+
+    var motorEnable = serial.motorEnable;
+    var motorValue = serial.motorValue;
     List<Widget> ret = [];
     for (int i = 0; i < motorEnable.length; ++i) {
       void Function(double)? func;
@@ -47,7 +101,7 @@ class _RawControlBodyState extends State<RawControlBody> {
           setState(() {
             motorValue[i] = value;
           });
-          writeCmd(i);
+          writeCmd(context, i);
         };
       }
 
@@ -74,7 +128,7 @@ class _RawControlBodyState extends State<RawControlBody> {
             setState(() {
               motorEnable[i] = value;
             });
-            writeCmd(i);
+            writeCmd(context, i);
           },
         ),
       ));

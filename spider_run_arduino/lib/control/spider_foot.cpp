@@ -15,6 +15,8 @@ SpiderFoot::SpiderFoot(SpiderFootDef foot_def)
 SpiderFoot::SpiderFoot(SpiderFootDef foot_def, SpiderFootSetting setting)
     : pwm(foot_def.pwm), pin(foot_def.pin), setting(setting) {}
 
+SpiderFootStatus::SpiderFootStatus() : enabled(false), deg(90), pulse(-1) {}
+
 void SpiderFoot::update_setting(SpiderFootSetting setting) {
   this->setting = setting;
 }
@@ -26,6 +28,10 @@ void SpiderFoot::write_raw_deg(int16_t deg) {
   if (deg >= 0 && deg <= 180) {
     val = map(deg, 0, 180, DEFAULT_FOOT_MIN, DEFAULT_FOOT_MAX);
     val = constrain(val, HARDWARE_LIMIT_MIN, HARDWARE_LIMIT_MAX);
+    this->status.enabled = true;
+    this->status.pulse = val;
+  } else {
+    this->status.enabled = false;
   }
   pwm.setPWM(pin, 0, val);
 }
@@ -35,9 +41,16 @@ void SpiderFoot::write(int16_t deg) {
   if (deg >= 0 && deg <= 180) {
     val = map(deg, 0, 180, setting.min_val, setting.max_val);
     val = constrain(val, HARDWARE_LIMIT_MIN, HARDWARE_LIMIT_MAX);
+    this->status.deg = deg;
+    this->status.pulse = val;
+    this->status.enabled = true;
+  } else {
+    this->status.enabled = false;
   }
   pwm.setPWM(pin, 0, val);
 }
+
+SpiderFootStatus SpiderFoot::get_status() { return this->status; }
 
 void reset_pwm(Adafruit_PWMServoDriver& cur_pwm) {
   for (int i = 0; i < 16; ++i) {

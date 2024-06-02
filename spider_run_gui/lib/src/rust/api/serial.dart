@@ -38,6 +38,14 @@ class SerialConnection extends RustOpaque {
   Future<void> disconnect({dynamic hint}) =>
       RustLib.instance.api.serialConnectionDisconnect(that: this, hint: hint);
 
+  Future<SpiderFootStatus> getFootStatus({required int pin, dynamic hint}) =>
+      RustLib.instance.api
+          .serialConnectionGetFootStatus(that: this, pin: pin, hint: hint);
+
+  Future<SpiderFootSetting> getSetting({required int pin, dynamic hint}) =>
+      RustLib.instance.api
+          .serialConnectionGetSetting(that: this, pin: pin, hint: hint);
+
   Future<bool> isConnected({dynamic hint}) =>
       RustLib.instance.api.serialConnectionIsConnected(that: this, hint: hint);
 
@@ -48,4 +56,58 @@ class SerialConnection extends RustOpaque {
           {required int pin, required int deg, dynamic hint}) =>
       RustLib.instance.api.serialConnectionSendWriteCmd(
           that: this, pin: pin, deg: deg, hint: hint);
+
+  Future<void> updateSetting(
+          {required int pin,
+          required double centerDeg,
+          required double multiply,
+          dynamic hint}) =>
+      RustLib.instance.api.serialConnectionUpdateSetting(
+          that: this,
+          pin: pin,
+          centerDeg: centerDeg,
+          multiply: multiply,
+          hint: hint);
+}
+
+class SpiderFootSetting {
+  final double centerDeg;
+  final double multiply;
+
+  const SpiderFootSetting({
+    required this.centerDeg,
+    required this.multiply,
+  });
+
+  @override
+  int get hashCode => centerDeg.hashCode ^ multiply.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SpiderFootSetting &&
+          runtimeType == other.runtimeType &&
+          centerDeg == other.centerDeg &&
+          multiply == other.multiply;
+}
+
+class SpiderFootStatus {
+  final bool enabled;
+  final int deg;
+
+  const SpiderFootStatus({
+    required this.enabled,
+    required this.deg,
+  });
+
+  @override
+  int get hashCode => enabled.hashCode ^ deg.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SpiderFootStatus &&
+          runtimeType == other.runtimeType &&
+          enabled == other.enabled &&
+          deg == other.deg;
 }

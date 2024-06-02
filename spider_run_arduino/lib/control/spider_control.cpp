@@ -2,6 +2,13 @@
 
 #include "Adafruit_PWMServoDriver.h"
 
+SpiderFootSettingCenter::SpiderFootSettingCenter()
+    : center_deg(90), multiply(1000) {}
+
+SpiderFootSettingCenter::SpiderFootSettingCenter(int16_t center_deg,
+                                                 int16_t multiply)
+    : center_deg(center_deg), multiply(multiply) {}
+
 SpiderControl::SpiderControl(SpiderControlConf conf)
     : feet{
           SpiderFoot(conf.defs[0], SpiderFootSetting()),
@@ -24,7 +31,7 @@ SpiderControl::SpiderControl(SpiderControlConf conf)
           SpiderFoot(conf.defs[17], SpiderFootSetting()),
       } {}
 
-SpiderResult SpiderControl::write_one_deg(uint8_t pin, int16_t deg) {
+SpiderResult SpiderControl::write(uint8_t pin, int16_t deg) {
   if (pin < N_FEET) {
     feet[pin].write(deg);
     return SpiderResult::SUCCESS;
@@ -32,7 +39,7 @@ SpiderResult SpiderControl::write_one_deg(uint8_t pin, int16_t deg) {
   return SpiderResult::INVALID_PIN;
 }
 
-SpiderResult SpiderControl::write_one_raw_deg(uint8_t pin, int16_t deg) {
+SpiderResult SpiderControl::write_raw_deg(uint8_t pin, int16_t deg) {
   if (pin < N_FEET) {
     feet[pin].write_raw_deg(deg);
     return SpiderResult::SUCCESS;
@@ -77,4 +84,28 @@ SpiderFootSetting SpiderControl::get_setting(uint8_t pin) {
     return feet[pin].get_setting();
   }
   return SpiderFootSetting();
+}
+
+SpiderFootSettingCenter SpiderControl::get_setting_center(uint8_t pin) {
+  if (pin >= N_FEET) {
+    return SpiderFootSettingCenter();
+  }
+  SpiderFootSetting setting = this->get_setting(pin);
+  const static int32_t default_length = (DEFAULT_FOOT_MAX - DEFAULT_FOOT_MIN);
+  int32_t length = setting.max_val - setting.min_val;
+  int16_t multiply = (length * 1000) / default_length;
+  multiply = constrain(multiply, -2000, 2000);
+  int16_t center_pulse = (setting.max_val + setting.min_val) / 2;
+  int16_t center =
+      map(center_pulse, DEFAULT_FOOT_MIN, DEFAULT_FOOT_MAX, 0, 180);
+  center = constrain(center, 0, 180);
+  SpiderFootSettingCenter ret(center, multiply);
+  return ret;
+}
+
+SpiderFootStatus SpiderControl::get_status(uint8_t pin) {
+  if (pin < N_FEET) {
+    return feet[pin].get_status();
+  }
+  return SpiderFootStatus();
 }

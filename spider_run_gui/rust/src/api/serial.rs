@@ -1,9 +1,10 @@
 use anyhow::{anyhow, Ok};
 use anyhow::{Context, Result};
 use serialport::{self, SerialPort};
+use std::fmt::format;
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -16,6 +17,8 @@ pub fn list_ports() -> Result<Vec<String>> {
 pub trait SerialInterface: Send {
     fn send_write_cmd(&mut self, pin: i32, deg: i32) -> Result<()>;
     fn update_setting(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()>;
+    fn get_setting(&mut self, pin: i32) -> Result<SpiderFootSetting>;
+    fn get_foot_status(&mut self, pin: i32) -> Result<SpiderFootStatus>;
 }
 
 pub struct UsbSerial {
@@ -63,31 +66,160 @@ impl SerialInterface for UsbSerial {
         println!("Get message {}", msg);
         Ok(())
     }
+
+    fn get_setting(&mut self, pin: i32) -> Result<SpiderFootSetting> {
+        let cmd = format!("getset {}\n", pin);
+        self.conn
+            .write_all(cmd.as_bytes())
+            .with_context(|| "Write cmd failed")?;
+        let mut msg = String::new();
+        let _ret = self.reader.read_line(&mut msg)?;
+        let tokens = msg
+            .trim()
+            .split(' ')
+            .enumerate()
+            .map(|(i, v)| {
+                v.parse::<i32>()
+                    .with_context(|| format!("parse getset response error getset[{}] = {}", i, v))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        if tokens.len() < 3 {
+            return Err(anyhow!("invalid token length"));
+        }
+        let center_deg = tokens[1] as f64;
+        let multiply = tokens[2] as f64 / 1000.0;
+        let ret = SpiderFootSetting {
+            center_deg,
+            multiply,
+        };
+
+        Ok(ret)
+    }
+
+    fn get_foot_status(&mut self, pin: i32) -> Result<SpiderFootStatus> {
+        let cmd = format!("getsta {}\n", pin);
+        self.conn
+            .write_all(cmd.as_bytes())
+            .with_context(|| "Write cmd failed")?;
+        let mut msg = String::new();
+        let _ret = self.reader.read_line(&mut msg)?;
+        let tokens = msg
+            .trim()
+            .split(' ')
+            .enumerate()
+            .map(|(i, v)| {
+                v.parse::<i32>()
+                    .with_context(|| format!("parse getsta response error getsta[{}] = {}", i, v))
+            })
+            .collect::<Result<Vec<i32>>>()?;
+        if tokens.len() < 4 {
+            return Err(anyhow!("invalid token length"));
+        }
+        let enabled = tokens[1] > 0;
+        let deg = tokens[2];
+        let ret = SpiderFootStatus { enabled, deg };
+        Ok(ret)
+    }
 }
 
 // unsafe impl Sync for UsbSerial {}
 
-pub struct MockSerialConnection {}
+#[derive(Clone, Copy, Debug)]
+pub struct SpiderFootStatus {
+    pub enabled: bool,
+    pub deg: i32,
+}
+
+impl SpiderFootStatus {
+    fn new() -> Self {
+        Self {
+            enabled: false,
+            deg: 90,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct SpiderFootSetting {
+    pub center_deg: f64,
+    pub multiply: f64,
+}
+
+impl SpiderFootSetting {
+    fn new() -> Self {
+        Self {
+            center_deg: 90.0,
+            multiply: 1.0,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct MockSerialConnection {
+    foot_status: [SpiderFootStatus; 18],
+    foot_settings: [SpiderFootSetting; 18],
+}
 
 impl MockSerialConnection {
+    fn new() -> Self {
+        Self {
+            foot_status: [SpiderFootStatus::new(); 18],
+            foot_settings: [SpiderFootSetting::new(); 18],
+        }
+    }
+
     fn create(device_name: &str) -> Result<Self> {
         println!("Mock create {}", device_name);
         sleep(Duration::from_secs(1));
-        Ok(Self {})
+        Ok(Self::new())
     }
 }
 
 impl SerialInterface for MockSerialConnection {
     fn send_write_cmd(&mut self, pin: i32, deg: i32) -> Result<()> {
         sleep(Duration::from_millis(10));
+        let pin = pin as usize;
+        if pin < self.foot_status.len() {
+            if deg < 0 {
+                self.foot_status[pin].enabled = false;
+            } else {
+                self.foot_status[pin].enabled = true;
+                self.foot_status[pin].deg = deg;
+            }
+        }
         println!("Mock Write {} {}", pin, deg);
         Ok(())
     }
 
     fn update_setting(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()> {
         sleep(Duration::from_millis(10));
+        let pin = pin as usize;
+        if pin < self.foot_settings.len() {
+            self.foot_settings[pin].center_deg = center_deg;
+            self.foot_settings[pin].multiply = multiply;
+        }
         println!("Mock update {} {} {}", pin, center_deg, multiply);
         Ok(())
+    }
+
+    fn get_setting(&mut self, pin: i32) -> Result<SpiderFootSetting> {
+        sleep(Duration::from_millis(10));
+        let pin = pin as usize;
+        if pin < self.foot_settings.len() {
+            Ok(self.foot_settings[pin])
+        } else {
+            Err(anyhow!("pin should < 18"))
+        }
+    }
+
+    fn get_foot_status(&mut self, pin: i32) -> Result<SpiderFootStatus> {
+        sleep(Duration::from_millis(10));
+        let pin = pin as usize;
+        if pin < self.foot_status.len() {
+            Ok(self.foot_status[pin])
+        } else {
+            Err(anyhow!("pin should < 18"))
+        }
     }
 }
 
@@ -129,13 +261,36 @@ impl SerialConnection {
 
     pub fn send_write_cmd(&self, pin: i32, deg: i32) -> Result<()> {
         let mut comp = self.comp.lock().unwrap();
-        match *comp {
-            Some(ref mut comp) => {
-                comp.send_write_cmd(pin, deg)?;
-            }
-            None => return Err(anyhow!("Serial not connect")),
-        }
+        let comp = comp
+            .as_deref_mut()
+            .ok_or_else(|| anyhow!("Serial not connect"))?;
+        comp.send_write_cmd(pin, deg)?;
         Ok(())
+    }
+
+    pub fn update_setting(&self, pin: i32, center_deg: f64, multiply: f64) -> Result<()> {
+        let mut comp = self.comp.lock().unwrap();
+        let comp = comp
+            .as_deref_mut()
+            .ok_or_else(|| anyhow!("Serial not connect"))?;
+        comp.update_setting(pin, center_deg, multiply)?;
+        Ok(())
+    }
+
+    pub fn get_setting(&self, pin: i32) -> Result<SpiderFootSetting> {
+        let mut comp = self.comp.lock().unwrap();
+        let comp = comp
+            .as_deref_mut()
+            .ok_or_else(|| anyhow!("Serial not connect"))?;
+        comp.get_setting(pin)
+    }
+
+    pub fn get_foot_status(&self, pin: i32) -> Result<SpiderFootStatus> {
+        let mut comp = self.comp.lock().unwrap();
+        let comp = comp
+            .as_deref_mut()
+            .ok_or_else(|| anyhow!("Serial not connect"))?;
+        comp.get_foot_status(pin)
     }
 }
 

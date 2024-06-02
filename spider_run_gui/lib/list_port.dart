@@ -34,7 +34,8 @@ class _ListPortPageState extends State<ListPortPage> {
   @override
   void initState() {
     super.initState();
-    portsStream = getPortsStreamMock();
+    // portsStream = getPortsStreamMock();
+    portsStream = getPortsStream();
   }
 
   List<Widget> buildDevices(BuildContext context, List<String> devices) {

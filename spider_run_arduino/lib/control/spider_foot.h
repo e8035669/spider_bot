@@ -18,6 +18,13 @@ struct SpiderFootSetting {
   SpiderFootSetting(int16_t min_val, int16_t max_val);
 };
 
+struct SpiderFootStatus {
+  bool enabled;
+  int16_t deg;
+  int16_t pulse;
+  SpiderFootStatus();
+};
+
 // 定義一個可動關節的腳位位置，是在哪個板子上及哪個pin腳
 struct SpiderFootDef {
   Adafruit_PWMServoDriver& pwm;
@@ -30,6 +37,7 @@ class SpiderFoot {
   Adafruit_PWMServoDriver& pwm;
   uint8_t pin;
   SpiderFootSetting setting;
+  SpiderFootStatus status;
 
  public:
   SpiderFoot(SpiderFootDef foot_def);
@@ -42,6 +50,8 @@ class SpiderFoot {
   void write_raw_deg(int16_t deg);
 
   void write(int16_t deg);
+
+  SpiderFootStatus get_status();
 };
 
 // 將某塊板子的所有腳位關閉

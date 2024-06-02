@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:spider_run_gui/center_setting.dart';
 import 'package:spider_run_gui/common_page.dart';
 import 'package:spider_run_gui/raw_control.dart';
 import 'package:spider_run_gui/src/rust/api/serial.dart';
@@ -13,8 +14,20 @@ class FunctionMenuBody extends StatefulWidget {
   State<FunctionMenuBody> createState() => _FunctionMenuBodyState();
 }
 
+class MenuItem {
+  String title;
+  void Function(BuildContext context)? func;
+
+  MenuItem(this.title, this.func);
+}
+
 class _FunctionMenuBodyState extends State<FunctionMenuBody> {
   Future<String>? connectState;
+
+  late List<MenuItem> menuItems = [
+    MenuItem("Raw Control", openRawControl),
+    MenuItem("Center Setting", openCenterSetting),
+  ];
 
   @override
   void initState() {
@@ -32,28 +45,60 @@ class _FunctionMenuBodyState extends State<FunctionMenuBody> {
     );
   }
 
+  void openRawControl(BuildContext context) {
+    var model = context.read<SerialConnectModel>();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          return Provider.value(
+            value: model,
+            child: CommonPage(
+              Text(widget.deviceName),
+              RawControlBody(widget.deviceName),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void openCenterSetting(BuildContext context) {
+    var model = context.read<SerialConnectModel>();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          return Provider.value(
+            value: model,
+            child: CommonPage(
+              Text(widget.deviceName),
+              CenterSettingPage(widget.deviceName),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget buildContent(BuildContext context) {
     return ListView(
-      children: [
-        Card(
-          child: ListTile(
-            title: const Text("Raw Control"),
-            onTap: () {
-              var model = context.read<SerialConnectModel>();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) {
-                  return Provider.value(
-                    value: model,
-                    child: CommonPage(Text(widget.deviceName),
-                        RawControlBody(widget.deviceName)),
-                  );
-                }),
-              );
-            },
-          ),
-        ),
-      ],
+      children: menuItems
+          .map(
+            (m) => Card(
+              child: ListTile(
+                title: Text(m.title),
+                onTap: m.func != null ? () => m.func!(context) : null,
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget buildError(BuildContext context) {
+    return Center(
+      child: Icon(Icons.error),
     );
   }
 
@@ -63,12 +108,7 @@ class _FunctionMenuBodyState extends State<FunctionMenuBody> {
       future: connectState,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error on open ${widget.deviceName}'),
-            ),
-          );
+          return buildError(context);
         }
 
         if (snapshot.hasData) {
@@ -81,11 +121,21 @@ class _FunctionMenuBodyState extends State<FunctionMenuBody> {
   }
 }
 
+class CenterTweak {
+  bool invert = false;
+  double center = 90.0;
+  double multiply = 1.0;
+}
+
 class SerialConnectModel {
   SerialConnection conn = SerialConnection();
 
+  List<bool> motorEnable = List.filled(18, false);
+  List<double> motorValue = List.filled(18, 90.0);
+  List<CenterTweak> tweaks = List.generate(18, (index) => CenterTweak());
+
   Future<Null> connect(String deviceName) async {
-    await conn.connect(deviceName: deviceName, mock: true);
+    await conn.connect(deviceName: deviceName, mock: false);
   }
 
   void disconnect() async {
@@ -98,5 +148,28 @@ class SerialConnectModel {
 
   Future<Null> sendWriteCmd(int pin, int deg) async {
     await conn.sendWriteCmd(pin: pin, deg: deg);
+  }
+
+  Future<Null> updateSetting(int pin, double centerDeg, double multiply) async {
+    await conn.updateSetting(
+        pin: pin, centerDeg: centerDeg, multiply: multiply);
+  }
+
+  Future<Null> getAllSetting() async {
+    for (int i = 0; i < 18; ++i) {
+      var setting = await conn.getSetting(pin: i);
+      var tweak = tweaks[i];
+      tweak.invert = setting.multiply.isNegative;
+      tweak.center = setting.centerDeg;
+      tweak.multiply = setting.multiply.abs();
+    }
+  }
+
+  Future<Null> getAllFootStatus() async {
+    for (int i = 0; i < 18; ++i) {
+      var cur = await conn.getFootStatus(pin: i);
+      motorEnable[i] = cur.enabled;
+      motorValue[i] = cur.deg.toDouble();
+    }
   }
 }

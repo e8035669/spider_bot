@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "spider_run_gui"
+		},
+		{
+			"path": "spider_run_arduino"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"chrono": "cpp",
+			"variant": "cpp"
+		}
+	}
+}
