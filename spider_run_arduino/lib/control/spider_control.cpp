@@ -109,3 +109,9 @@ SpiderFootStatus SpiderControl::get_status(uint8_t pin) {
   }
   return SpiderFootStatus();
 }
+
+void SpiderControl::reset_setting() {
+  for (int i = 0; i < N_FEET; ++i) {
+    this->feet[i].update_setting(SpiderFootSetting());
+  }
+}

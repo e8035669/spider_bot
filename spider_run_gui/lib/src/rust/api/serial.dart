@@ -38,13 +38,13 @@ class SerialConnection extends RustOpaque {
   Future<void> disconnect({dynamic hint}) =>
       RustLib.instance.api.serialConnectionDisconnect(that: this, hint: hint);
 
-  Future<SpiderFootStatus> getFootStatus({required int pin, dynamic hint}) =>
-      RustLib.instance.api
-          .serialConnectionGetFootStatus(that: this, pin: pin, hint: hint);
-
   Future<SpiderFootSetting> getSetting({required int pin, dynamic hint}) =>
       RustLib.instance.api
           .serialConnectionGetSetting(that: this, pin: pin, hint: hint);
+
+  Future<SpiderFootStatus> getStatus({required int pin, dynamic hint}) =>
+      RustLib.instance.api
+          .serialConnectionGetStatus(that: this, pin: pin, hint: hint);
 
   Future<bool> isConnected({dynamic hint}) =>
       RustLib.instance.api.serialConnectionIsConnected(that: this, hint: hint);
@@ -52,22 +52,27 @@ class SerialConnection extends RustOpaque {
   factory SerialConnection({dynamic hint}) =>
       RustLib.instance.api.serialConnectionNew(hint: hint);
 
-  Future<void> sendWriteCmd(
-          {required int pin, required int deg, dynamic hint}) =>
-      RustLib.instance.api.serialConnectionSendWriteCmd(
-          that: this, pin: pin, deg: deg, hint: hint);
+  Future<void> reset({dynamic hint}) =>
+      RustLib.instance.api.serialConnectionReset(that: this, hint: hint);
 
-  Future<void> updateSetting(
+  Future<void> save({dynamic hint}) =>
+      RustLib.instance.api.serialConnectionSave(that: this, hint: hint);
+
+  Future<void> update(
           {required int pin,
           required double centerDeg,
           required double multiply,
           dynamic hint}) =>
-      RustLib.instance.api.serialConnectionUpdateSetting(
+      RustLib.instance.api.serialConnectionUpdate(
           that: this,
           pin: pin,
           centerDeg: centerDeg,
           multiply: multiply,
           hint: hint);
+
+  Future<void> write({required int pin, required int deg, dynamic hint}) =>
+      RustLib.instance.api
+          .serialConnectionWrite(that: this, pin: pin, deg: deg, hint: hint);
 }
 
 class SpiderFootSetting {

@@ -8,11 +8,7 @@
 #include "spider_control.h"
 #include "spider_foot.h"
 
-#define DEFAULT_USMIN 600
-#define DEFAULT_USMAX 2400
-#define DEFAULT_SERVOMIN 123  // 600 / 20000 * 4096
-#define DEFAULT_SERVOMAX 491  // 2400 / 20000 * 4096
-#define SERVO_FREQ 50         // Analog servos run at ~50 Hz updates
+#define SERVO_FREQ 50  // Analog servos run at ~50 Hz updates
 
 #define N_PWMS 2
 
@@ -95,7 +91,7 @@ void cmd_getstatus(MyCommandParser::Argument* args, char* response) {
           status.pulse);
 }
 
-void cmd_savedata(MyCommandParser::Argument* args, char* response) {
+void cmd_save(MyCommandParser::Argument* args, char* response) {
   SpiderFootSetting datas[18];
   for (int i = 0; i < 18; ++i) {
     datas[i] = spider.get_setting(i);
@@ -104,7 +100,17 @@ void cmd_savedata(MyCommandParser::Argument* args, char* response) {
   sprintf(response, "OK");
 }
 
-void cmd_readdata(MyCommandParser::Argument* args, char* response) {
+void cmd_reset(MyCommandParser::Argument* args, char* response) {
+  spider.reset_setting();
+  SpiderFootSetting datas[18];
+  for (int i = 0; i < 18; ++i) {
+    datas[i] = spider.get_setting(i);
+  }
+  eeprom_crc_put(0, datas);
+  sprintf(response, "OK");
+}
+
+bool try_load_eeprom() {
   SpiderFootSetting datas[18];
   bool ret = eeprom_crc_get(0, datas);
   if (ret) {
@@ -112,7 +118,7 @@ void cmd_readdata(MyCommandParser::Argument* args, char* response) {
       spider.update_setting(i, datas[i]);
     }
   }
-  sprintf(response, "get ret = %d", ret);
+  return ret;
 }
 
 void setup() {
@@ -129,12 +135,14 @@ void setup() {
     reset_pwm(pwms[i]);
   }
 
+  try_load_eeprom();
+
   parser.registerCommand("write", "ui", cmd_write);
   parser.registerCommand("update", "uii", cmd_update);
   parser.registerCommand("getset", "u", cmd_getsetting);
   parser.registerCommand("getsta", "u", cmd_getstatus);
-  parser.registerCommand("savedata", "", cmd_savedata);
-  parser.registerCommand("readdata", "", cmd_readdata);
+  parser.registerCommand("save", "", cmd_save);
+  parser.registerCommand("reset", "", cmd_reset);
 }
 
 void loop() {

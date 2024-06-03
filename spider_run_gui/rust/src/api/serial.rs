@@ -15,10 +15,12 @@ pub fn list_ports() -> Result<Vec<String>> {
 }
 
 pub trait SerialInterface: Send {
-    fn send_write_cmd(&mut self, pin: i32, deg: i32) -> Result<()>;
-    fn update_setting(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()>;
+    fn write(&mut self, pin: i32, deg: i32) -> Result<()>;
+    fn update(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()>;
     fn get_setting(&mut self, pin: i32) -> Result<SpiderFootSetting>;
-    fn get_foot_status(&mut self, pin: i32) -> Result<SpiderFootStatus>;
+    fn get_status(&mut self, pin: i32) -> Result<SpiderFootStatus>;
+    fn save(&mut self) -> Result<()>;
+    fn reset(&mut self) -> Result<()>;
 }
 
 pub struct UsbSerial {
@@ -40,7 +42,7 @@ impl UsbSerial {
 }
 
 impl SerialInterface for UsbSerial {
-    fn send_write_cmd(&mut self, pin: i32, deg: i32) -> Result<()> {
+    fn write(&mut self, pin: i32, deg: i32) -> Result<()> {
         let cmd = format!("write {} {}\n", pin, deg);
         self.conn
             .write_all(cmd.as_bytes())
@@ -53,7 +55,7 @@ impl SerialInterface for UsbSerial {
         Ok(())
     }
 
-    fn update_setting(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()> {
+    fn update(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()> {
         let center_deg = center_deg.round() as i32;
         let multiply = (multiply * 1000.0).round() as i32;
         let cmd = format!("update {} {} {}\n", pin, center_deg, multiply);
@@ -96,7 +98,7 @@ impl SerialInterface for UsbSerial {
         Ok(ret)
     }
 
-    fn get_foot_status(&mut self, pin: i32) -> Result<SpiderFootStatus> {
+    fn get_status(&mut self, pin: i32) -> Result<SpiderFootStatus> {
         let cmd = format!("getsta {}\n", pin);
         self.conn
             .write_all(cmd.as_bytes())
@@ -119,6 +121,32 @@ impl SerialInterface for UsbSerial {
         let deg = tokens[2];
         let ret = SpiderFootStatus { enabled, deg };
         Ok(ret)
+    }
+
+    fn save(&mut self) -> Result<()> {
+        let cmd = String::from("save\n");
+        self.conn
+            .write_all(cmd.as_bytes())
+            .with_context(|| "Write cmd failed")?;
+        let mut msg = String::new();
+        let _ret = self.reader.read_line(&mut msg)?;
+        if msg.trim() != "OK" {
+            return Err(anyhow!("Remote not report OK"));
+        }
+        Ok(())
+    }
+
+    fn reset(&mut self) -> Result<()> {
+        let cmd = String::from("reset\n");
+        self.conn
+            .write_all(cmd.as_bytes())
+            .with_context(|| "Write cmd failed")?;
+        let mut msg = String::new();
+        let _ret = self.reader.read_line(&mut msg)?;
+        if msg.trim() != "OK" {
+            return Err(anyhow!("Remote not report OK"));
+        }
+        Ok(())
     }
 }
 
@@ -173,10 +201,14 @@ impl MockSerialConnection {
         sleep(Duration::from_secs(1));
         Ok(Self::new())
     }
+
+    fn reset_default(&mut self) {
+        self.foot_settings = [SpiderFootSetting::new(); 18]
+    }
 }
 
 impl SerialInterface for MockSerialConnection {
-    fn send_write_cmd(&mut self, pin: i32, deg: i32) -> Result<()> {
+    fn write(&mut self, pin: i32, deg: i32) -> Result<()> {
         sleep(Duration::from_millis(10));
         let pin = pin as usize;
         if pin < self.foot_status.len() {
@@ -191,7 +223,7 @@ impl SerialInterface for MockSerialConnection {
         Ok(())
     }
 
-    fn update_setting(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()> {
+    fn update(&mut self, pin: i32, center_deg: f64, multiply: f64) -> Result<()> {
         sleep(Duration::from_millis(10));
         let pin = pin as usize;
         if pin < self.foot_settings.len() {
@@ -212,7 +244,7 @@ impl SerialInterface for MockSerialConnection {
         }
     }
 
-    fn get_foot_status(&mut self, pin: i32) -> Result<SpiderFootStatus> {
+    fn get_status(&mut self, pin: i32) -> Result<SpiderFootStatus> {
         sleep(Duration::from_millis(10));
         let pin = pin as usize;
         if pin < self.foot_status.len() {
@@ -220,6 +252,17 @@ impl SerialInterface for MockSerialConnection {
         } else {
             Err(anyhow!("pin should < 18"))
         }
+    }
+
+    fn save(&mut self) -> Result<()> {
+        sleep(Duration::from_millis(10));
+        Ok(())
+    }
+
+    fn reset(&mut self) -> Result<()> {
+        sleep(Duration::from_millis(10));
+        self.reset_default();
+        Ok(())
     }
 }
 
@@ -259,21 +302,21 @@ impl SerialConnection {
         Ok(())
     }
 
-    pub fn send_write_cmd(&self, pin: i32, deg: i32) -> Result<()> {
+    pub fn write(&self, pin: i32, deg: i32) -> Result<()> {
         let mut comp = self.comp.lock().unwrap();
         let comp = comp
             .as_deref_mut()
             .ok_or_else(|| anyhow!("Serial not connect"))?;
-        comp.send_write_cmd(pin, deg)?;
+        comp.write(pin, deg)?;
         Ok(())
     }
 
-    pub fn update_setting(&self, pin: i32, center_deg: f64, multiply: f64) -> Result<()> {
+    pub fn update(&self, pin: i32, center_deg: f64, multiply: f64) -> Result<()> {
         let mut comp = self.comp.lock().unwrap();
         let comp = comp
             .as_deref_mut()
             .ok_or_else(|| anyhow!("Serial not connect"))?;
-        comp.update_setting(pin, center_deg, multiply)?;
+        comp.update(pin, center_deg, multiply)?;
         Ok(())
     }
 
@@ -285,12 +328,28 @@ impl SerialConnection {
         comp.get_setting(pin)
     }
 
-    pub fn get_foot_status(&self, pin: i32) -> Result<SpiderFootStatus> {
+    pub fn get_status(&self, pin: i32) -> Result<SpiderFootStatus> {
         let mut comp = self.comp.lock().unwrap();
         let comp = comp
             .as_deref_mut()
             .ok_or_else(|| anyhow!("Serial not connect"))?;
-        comp.get_foot_status(pin)
+        comp.get_status(pin)
+    }
+
+    pub fn save(&self) -> Result<()> {
+        let mut comp = self.comp.lock().unwrap();
+        let comp = comp
+            .as_deref_mut()
+            .ok_or_else(|| anyhow!("Serial not connect"))?;
+        comp.save()
+    }
+
+    pub fn reset(&self) -> Result<()> {
+        let mut comp = self.comp.lock().unwrap();
+        let comp = comp
+            .as_deref_mut()
+            .ok_or_else(|| anyhow!("Serial not connect"))?;
+        comp.reset()
     }
 }
 

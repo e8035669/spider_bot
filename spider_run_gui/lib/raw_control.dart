@@ -19,7 +19,7 @@ class _RawControlBodyState extends State<RawControlBody> {
     super.initState();
 
     var serial = context.read<SerialConnectModel>();
-    loadState = serial.getAllFootStatus().then((value) => "OK");
+    loadState = serial.getAllStatus().then((value) => "OK");
   }
 
   @override
@@ -80,11 +80,11 @@ class _RawControlContentState extends State<RawControlContent> {
 
     if (motorEnable[pin]) {
       var deg = motorValue[pin];
-      debugPrint("sendWriteCmd $pin ${deg.toInt()}");
-      await serial.sendWriteCmd(pin, deg.toInt());
+      debugPrint("write $pin ${deg.toInt()}");
+      await serial.write(pin, deg.toInt());
     } else {
-      debugPrint("sendWriteCmd $pin -1");
-      await serial.sendWriteCmd(pin, -1);
+      debugPrint("write $pin -1");
+      await serial.write(pin, -1);
     }
   }
 

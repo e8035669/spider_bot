@@ -74,6 +74,7 @@ class _FunctionMenuBodyState extends State<FunctionMenuBody> {
             child: CommonPage(
               Text(widget.deviceName),
               CenterSettingPage(widget.deviceName),
+              actions: CenterSettingPage.getPageActions(),
             ),
           );
         },
@@ -146,16 +147,15 @@ class SerialConnectModel {
     return await conn.isConnected();
   }
 
-  Future<Null> sendWriteCmd(int pin, int deg) async {
-    await conn.sendWriteCmd(pin: pin, deg: deg);
+  Future<void> write(int pin, int deg) async {
+    await conn.write(pin: pin, deg: deg);
   }
 
-  Future<Null> updateSetting(int pin, double centerDeg, double multiply) async {
-    await conn.updateSetting(
-        pin: pin, centerDeg: centerDeg, multiply: multiply);
+  Future<void> updateSetting(int pin, double centerDeg, double multiply) async {
+    await conn.update(pin: pin, centerDeg: centerDeg, multiply: multiply);
   }
 
-  Future<Null> getAllSetting() async {
+  Future<void> getAllSetting() async {
     for (int i = 0; i < 18; ++i) {
       var setting = await conn.getSetting(pin: i);
       var tweak = tweaks[i];
@@ -165,11 +165,19 @@ class SerialConnectModel {
     }
   }
 
-  Future<Null> getAllFootStatus() async {
+  Future<void> getAllStatus() async {
     for (int i = 0; i < 18; ++i) {
-      var cur = await conn.getFootStatus(pin: i);
+      var cur = await conn.getStatus(pin: i);
       motorEnable[i] = cur.enabled;
       motorValue[i] = cur.deg.toDouble();
     }
+  }
+
+  Future<void> save() async {
+    await conn.save();
+  }
+
+  Future<void> reset() async {
+    await conn.reset();
   }
 }

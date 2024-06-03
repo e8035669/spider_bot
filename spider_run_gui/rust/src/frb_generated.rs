@@ -32,7 +32,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.0.0-dev.32";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1946305087;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -961366495;
 
 // Section: executor
 
@@ -116,42 +116,6 @@ fn wire_SerialConnection_disconnect_impl(
         },
     )
 }
-fn wire_SerialConnection_get_foot_status_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "SerialConnection_get_foot_status",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_that = <RustOpaqueMoi<
-                flutter_rust_bridge::for_generated::rust_async::RwLock<SerialConnection>,
-            >>::sse_decode(&mut deserializer);
-            let api_pin = <i32>::sse_decode(&mut deserializer);
-            deserializer.end();
-            move |context| {
-                transform_result_sse((move || {
-                    let api_that = api_that.rust_auto_opaque_decode_ref();
-                    crate::api::serial::SerialConnection::get_foot_status(&api_that, api_pin)
-                })())
-            }
-        },
-    )
-}
 fn wire_SerialConnection_get_setting_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -183,6 +147,42 @@ fn wire_SerialConnection_get_setting_impl(
                 transform_result_sse((move || {
                     let api_that = api_that.rust_auto_opaque_decode_ref();
                     crate::api::serial::SerialConnection::get_setting(&api_that, api_pin)
+                })())
+            }
+        },
+    )
+}
+fn wire_SerialConnection_get_status_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "SerialConnection_get_status",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::rust_async::RwLock<SerialConnection>,
+            >>::sse_decode(&mut deserializer);
+            let api_pin = <i32>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse((move || {
+                    let api_that = api_that.rust_auto_opaque_decode_ref();
+                    crate::api::serial::SerialConnection::get_status(&api_that, api_pin)
                 })())
             }
         },
@@ -253,7 +253,7 @@ fn wire_SerialConnection_new_impl(
         },
     )
 }
-fn wire_SerialConnection_send_write_cmd_impl(
+fn wire_SerialConnection_reset_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -261,7 +261,7 @@ fn wire_SerialConnection_send_write_cmd_impl(
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "SerialConnection_send_write_cmd",
+            debug_name: "SerialConnection_reset",
             port: Some(port_),
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
@@ -278,21 +278,17 @@ fn wire_SerialConnection_send_write_cmd_impl(
             let api_that = <RustOpaqueMoi<
                 flutter_rust_bridge::for_generated::rust_async::RwLock<SerialConnection>,
             >>::sse_decode(&mut deserializer);
-            let api_pin = <i32>::sse_decode(&mut deserializer);
-            let api_deg = <i32>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse((move || {
                     let api_that = api_that.rust_auto_opaque_decode_ref();
-                    crate::api::serial::SerialConnection::send_write_cmd(
-                        &api_that, api_pin, api_deg,
-                    )
+                    crate::api::serial::SerialConnection::reset(&api_that)
                 })())
             }
         },
     )
 }
-fn wire_SerialConnection_update_setting_impl(
+fn wire_SerialConnection_save_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -300,7 +296,42 @@ fn wire_SerialConnection_update_setting_impl(
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "SerialConnection_update_setting",
+            debug_name: "SerialConnection_save",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::rust_async::RwLock<SerialConnection>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse((move || {
+                    let api_that = api_that.rust_auto_opaque_decode_ref();
+                    crate::api::serial::SerialConnection::save(&api_that)
+                })())
+            }
+        },
+    )
+}
+fn wire_SerialConnection_update_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "SerialConnection_update",
             port: Some(port_),
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
@@ -324,12 +355,49 @@ fn wire_SerialConnection_update_setting_impl(
             move |context| {
                 transform_result_sse((move || {
                     let api_that = api_that.rust_auto_opaque_decode_ref();
-                    crate::api::serial::SerialConnection::update_setting(
+                    crate::api::serial::SerialConnection::update(
                         &api_that,
                         api_pin,
                         api_center_deg,
                         api_multiply,
                     )
+                })())
+            }
+        },
+    )
+}
+fn wire_SerialConnection_write_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "SerialConnection_write",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::rust_async::RwLock<SerialConnection>,
+            >>::sse_decode(&mut deserializer);
+            let api_pin = <i32>::sse_decode(&mut deserializer);
+            let api_deg = <i32>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse((move || {
+                    let api_that = api_that.rust_auto_opaque_decode_ref();
+                    crate::api::serial::SerialConnection::write(&api_that, api_pin, api_deg)
                 })())
             }
         },
@@ -597,14 +665,16 @@ fn pde_ffi_dispatcher_primary_impl(
     match func_id {
         4 => wire_SerialConnection_connect_impl(port, ptr, rust_vec_len, data_len),
         5 => wire_SerialConnection_disconnect_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire_SerialConnection_get_foot_status_impl(port, ptr, rust_vec_len, data_len),
         8 => wire_SerialConnection_get_setting_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire_SerialConnection_get_status_impl(port, ptr, rust_vec_len, data_len),
         3 => wire_SerialConnection_is_connected_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire_SerialConnection_send_write_cmd_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire_SerialConnection_update_setting_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire_SerialConnection_reset_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire_SerialConnection_save_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire_SerialConnection_update_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire_SerialConnection_write_impl(port, ptr, rust_vec_len, data_len),
         1 => wire_list_ports_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire_hello_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire_init_app_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire_hello_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire_init_app_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -618,7 +688,7 @@ fn pde_ffi_dispatcher_sync_impl(
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
         2 => wire_SerialConnection_new_impl(ptr, rust_vec_len, data_len),
-        10 => wire_greet_impl(ptr, rust_vec_len, data_len),
+        12 => wire_greet_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

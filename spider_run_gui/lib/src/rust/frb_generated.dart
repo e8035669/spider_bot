@@ -57,7 +57,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.0.0-dev.32';
 
   @override
-  int get rustContentHash => -1946305087;
+  int get rustContentHash => -961366495;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -77,10 +77,10 @@ abstract class RustLibApi extends BaseApi {
   Future<void> serialConnectionDisconnect(
       {required SerialConnection that, dynamic hint});
 
-  Future<SpiderFootStatus> serialConnectionGetFootStatus(
+  Future<SpiderFootSetting> serialConnectionGetSetting(
       {required SerialConnection that, required int pin, dynamic hint});
 
-  Future<SpiderFootSetting> serialConnectionGetSetting(
+  Future<SpiderFootStatus> serialConnectionGetStatus(
       {required SerialConnection that, required int pin, dynamic hint});
 
   Future<bool> serialConnectionIsConnected(
@@ -88,17 +88,23 @@ abstract class RustLibApi extends BaseApi {
 
   SerialConnection serialConnectionNew({dynamic hint});
 
-  Future<void> serialConnectionSendWriteCmd(
-      {required SerialConnection that,
-      required int pin,
-      required int deg,
-      dynamic hint});
+  Future<void> serialConnectionReset(
+      {required SerialConnection that, dynamic hint});
 
-  Future<void> serialConnectionUpdateSetting(
+  Future<void> serialConnectionSave(
+      {required SerialConnection that, dynamic hint});
+
+  Future<void> serialConnectionUpdate(
       {required SerialConnection that,
       required int pin,
       required double centerDeg,
       required double multiply,
+      dynamic hint});
+
+  Future<void> serialConnectionWrite(
+      {required SerialConnection that,
+      required int pin,
+      required int deg,
       dynamic hint});
 
   Future<List<String>> listPorts({dynamic hint});
@@ -187,35 +193,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<SpiderFootStatus> serialConnectionGetFootStatus(
-      {required SerialConnection that, required int pin, dynamic hint}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedrust_asyncRwLockSerialConnection(
-            that, serializer);
-        sse_encode_i_32(pin, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 9, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_spider_foot_status,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kSerialConnectionGetFootStatusConstMeta,
-      argValues: [that, pin],
-      apiImpl: this,
-      hint: hint,
-    ));
-  }
-
-  TaskConstMeta get kSerialConnectionGetFootStatusConstMeta =>
-      const TaskConstMeta(
-        debugName: "SerialConnection_get_foot_status",
-        argNames: ["that", "pin"],
-      );
-
-  @override
   Future<SpiderFootSetting> serialConnectionGetSetting(
       {required SerialConnection that, required int pin, dynamic hint}) {
     return handler.executeNormal(NormalTask(
@@ -240,6 +217,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kSerialConnectionGetSettingConstMeta => const TaskConstMeta(
         debugName: "SerialConnection_get_setting",
+        argNames: ["that", "pin"],
+      );
+
+  @override
+  Future<SpiderFootStatus> serialConnectionGetStatus(
+      {required SerialConnection that, required int pin, dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedrust_asyncRwLockSerialConnection(
+            that, serializer);
+        sse_encode_i_32(pin, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 9, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_spider_foot_status,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kSerialConnectionGetStatusConstMeta,
+      argValues: [that, pin],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSerialConnectionGetStatusConstMeta => const TaskConstMeta(
+        debugName: "SerialConnection_get_status",
         argNames: ["that", "pin"],
       );
 
@@ -296,40 +301,61 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> serialConnectionSendWriteCmd(
-      {required SerialConnection that,
-      required int pin,
-      required int deg,
-      dynamic hint}) {
+  Future<void> serialConnectionReset(
+      {required SerialConnection that, dynamic hint}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedrust_asyncRwLockSerialConnection(
             that, serializer);
-        sse_encode_i_32(pin, serializer);
-        sse_encode_i_32(deg, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 6, port: port_);
+            funcId: 11, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData: sse_decode_AnyhowException,
       ),
-      constMeta: kSerialConnectionSendWriteCmdConstMeta,
-      argValues: [that, pin, deg],
+      constMeta: kSerialConnectionResetConstMeta,
+      argValues: [that],
       apiImpl: this,
       hint: hint,
     ));
   }
 
-  TaskConstMeta get kSerialConnectionSendWriteCmdConstMeta =>
-      const TaskConstMeta(
-        debugName: "SerialConnection_send_write_cmd",
-        argNames: ["that", "pin", "deg"],
+  TaskConstMeta get kSerialConnectionResetConstMeta => const TaskConstMeta(
+        debugName: "SerialConnection_reset",
+        argNames: ["that"],
       );
 
   @override
-  Future<void> serialConnectionUpdateSetting(
+  Future<void> serialConnectionSave(
+      {required SerialConnection that, dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedrust_asyncRwLockSerialConnection(
+            that, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 10, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kSerialConnectionSaveConstMeta,
+      argValues: [that],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSerialConnectionSaveConstMeta => const TaskConstMeta(
+        debugName: "SerialConnection_save",
+        argNames: ["that"],
+      );
+
+  @override
+  Future<void> serialConnectionUpdate(
       {required SerialConnection that,
       required int pin,
       required double centerDeg,
@@ -350,17 +376,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeSuccessData: sse_decode_unit,
         decodeErrorData: sse_decode_AnyhowException,
       ),
-      constMeta: kSerialConnectionUpdateSettingConstMeta,
+      constMeta: kSerialConnectionUpdateConstMeta,
       argValues: [that, pin, centerDeg, multiply],
       apiImpl: this,
       hint: hint,
     ));
   }
 
-  TaskConstMeta get kSerialConnectionUpdateSettingConstMeta =>
-      const TaskConstMeta(
-        debugName: "SerialConnection_update_setting",
+  TaskConstMeta get kSerialConnectionUpdateConstMeta => const TaskConstMeta(
+        debugName: "SerialConnection_update",
         argNames: ["that", "pin", "centerDeg", "multiply"],
+      );
+
+  @override
+  Future<void> serialConnectionWrite(
+      {required SerialConnection that,
+      required int pin,
+      required int deg,
+      dynamic hint}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedrust_asyncRwLockSerialConnection(
+            that, serializer);
+        sse_encode_i_32(pin, serializer);
+        sse_encode_i_32(deg, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 6, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kSerialConnectionWriteConstMeta,
+      argValues: [that, pin, deg],
+      apiImpl: this,
+      hint: hint,
+    ));
+  }
+
+  TaskConstMeta get kSerialConnectionWriteConstMeta => const TaskConstMeta(
+        debugName: "SerialConnection_write",
+        argNames: ["that", "pin", "deg"],
       );
 
   @override
@@ -393,7 +450,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(name, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -418,7 +475,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(a, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 12, port: port_);
+            funcId: 14, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -442,7 +499,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 11, port: port_);
+            funcId: 13, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,

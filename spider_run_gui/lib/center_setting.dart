@@ -8,6 +8,10 @@ class CenterSettingPage extends StatefulWidget {
 
   @override
   State<CenterSettingPage> createState() => _CenterSettingPageState();
+
+  static List<Widget> getPageActions() {
+    return [const CenterSettingSaveBtn()];
+  }
 }
 
 class _CenterSettingPageState extends State<CenterSettingPage> {
@@ -22,7 +26,7 @@ class _CenterSettingPageState extends State<CenterSettingPage> {
 
   Future<String> loadStatus() async {
     var serial = context.read<SerialConnectModel>();
-    await serial.getAllFootStatus();
+    await serial.getAllStatus();
     await serial.getAllSetting();
     return "OK";
   }
@@ -80,11 +84,11 @@ class _CenterSettingContentState extends State<CenterSettingContent> {
       debugPrint("updateSetting $n ${tweak.center} $multiply");
       await serial.updateSetting(n, tweak.center, multiply);
       var deg = serial.motorValue[n];
-      debugPrint("sendWriteCmd $n ${deg.toInt()}");
-      await serial.sendWriteCmd(n, deg.toInt());
+      debugPrint("write $n ${deg.toInt()}");
+      await serial.write(n, deg.toInt());
     } else {
-      debugPrint("sendWriteCmd $n -1");
-      await serial.sendWriteCmd(n, -1);
+      debugPrint("write $n -1");
+      await serial.write(n, -1);
     }
   }
 
@@ -182,7 +186,6 @@ class _CenterSettingContentState extends State<CenterSettingContent> {
 
   List<Widget> buildControl1(
       BuildContext context, SerialConnectModel serial, int n) {
-    var tweaks = serial.tweaks;
     var motorEnable = serial.motorEnable;
 
     List<Widget> ret = [
@@ -224,5 +227,20 @@ class _CenterSettingContentState extends State<CenterSettingContent> {
     );
 
     return ret;
+  }
+}
+
+class CenterSettingSaveBtn extends StatelessWidget {
+  const CenterSettingSaveBtn({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: () {
+        var serial = context.read<SerialConnectModel>();
+        serial.save();
+      },
+      icon: const Icon(Icons.save),
+    );
   }
 }

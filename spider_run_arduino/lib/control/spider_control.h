@@ -35,8 +35,9 @@ class SpiderControl {
   SpiderFootSetting get_setting(uint8_t pin);
   SpiderFootSettingCenter get_setting_center(uint8_t pin);
 
-
   SpiderFootStatus get_status(uint8_t pin);
+
+  void reset_setting();
 };
 
 #endif
